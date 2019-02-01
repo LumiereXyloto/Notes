@@ -57,7 +57,7 @@ webpack 支持AMD(RequireJS)，ES Modules(推荐的)和CommonJS
 
 
 ### Webpack基础
-![webpack打包原理](C:\Users\鹿鸣Lumiere\Desktop\my_webpack_project\docs\webpack.PNG)
+![webpack打包原理](.\images\webpack.PNG)
 
 ---
 
@@ -108,13 +108,13 @@ webpack 支持AMD(RequireJS)，ES Modules(推荐的)和CommonJS
 
 ##### babel-loader配置
 
-![](C:\Users\鹿鸣Lumiere\Desktop\my_webpack_project\docs\babel_loader.PNG)
+![](.\images\babel_loader.PNG)
 
 
 
 ***Note: options中的内容也可以在根目录创建名字为.babelrc的JSON文件，然后放在里面。***
 
-![](C:\Users\鹿鸣Lumiere\Desktop\my_webpack_project\docs\babelrc.PNG)
+![](.\images\\babelrc.PNG)
 
 
 
@@ -156,7 +156,7 @@ webpack 支持AMD(RequireJS)，ES Modules(推荐的)和CommonJS
 
 + 安装声明文件以后在tsconfig.json的compilerOptions里添加typeRoots，它是一个数组，元素为声明文件所在的目录，例如：
 
-  ![](C:\Users\鹿鸣Lumiere\Desktop\my_webpack_project\docs\typeRoots.PNG)
+  ![](.\images\typeRoots.PNG)
 
 
 
