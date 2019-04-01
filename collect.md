@@ -481,3 +481,279 @@ js的number类型有个最大值（安全值）。即2的53次方，为900719925
 
 
 
+##### 9.JavaScript脚本加载defer与async特性
+
++ JavaScript代码的执行会阻塞页面的解析渲染以及其他资源的下载
+
++ script标签的位置：
+
+  传统所有script元素都放在head元素中，必须等到全部js代码都被下载、解析、执行完毕后，才能开始呈现网页的内容（浏览器在遇到<body>标签时才开始呈现内容），这在需要很多js代码的页面来说，会造成浏览器在呈现页面时出现明显的延迟，而延迟期间的浏览器窗口将是一片空白。因此。一般把script标签放在</body>标签前面。
+
++ defer&async：
+
+  + 除IE9以下，其他浏览器不支持内部脚本defer属性，IE10+才支持async特性，opera mini不支持async特性，另外，async是不支持内部脚本的。
+  + defer="defer"和async="true/false"
+  + 没有defer或async，浏览器会立即加载并执行指定的JS脚本，也就是说，不等待后续载入的文档元素，读到JS脚本就加载并执行。
+  + 有async，加载后续文档元素的过程将和JS的加载与执行并行进行（异步）。
+  + 有defer，加载后续文档元素的过程将和JS的加载并行进行（异步），但JS的执行要在所有文档元素解析完成之后，DOMContentLoaded 事件触发之前完成。
+
++ 共同点
+
+  + 不会阻塞文档元素的加载。
+  + 使用这两个属性的脚本中不能调用document.write方法。指定异步脚本的目的是不让页面解析来等待脚本的下载和执行，从而异步加载页面其他内容，因此，建议异步脚本不要在加载期间修改DOM。
+  + 允许不定义属性值，仅仅使用属性名。
+  + 只适用于外部脚本（IE9以下支持，但是把延迟脚本放在页面底部仍然是最佳选择）
+
++ 不同点
+
+  + async让浏览器能并行下载脚本且不阻塞浏览器的文档解析和渲染，下载完成后脚本立即执行，可能无序执行，取决于下载完成的时间。一定会在window.onload之前执行，但可能在document的DOMContentLoaded之前或之后执行。
+  + defer使得浏览器能延迟脚本的下载，等document文档载入和解析完成后，按照他们在文档中出现顺序再去下载解析。也就是说defer属性的<script>就类似于将<script>放在body底部的效果，会在document的DOMContentLoaded事件之前执行。
+
++ 不支持async的浏览器可以动态创建script，通过window.onload方法确保页面加载完毕再将script标签插入到DOM中。实现脚本的异步载入和执行。
+
+  ```javascript
+  window.onload = function(){
+    var script = document.createElement('script');
+    script.setAttribute("type","text/javascript");
+    script.src = url;
+    document.body.appendChild(script);
+  }
+  ```
+
+
+
+##### 10.判断一个对象是否为空
+
+1. ES6的Object.keys()方法
+
+   ```javascript
+   var data = {};
+   var arr = Object.keys(data);
+   console.log(arr.length == 0);// true
+   ```
+
+2. Object.getOwnPropertyNames()方法
+
+   ```javascript
+   var data = {};
+   var arr = Object.getOwnPropertyNames(data);
+   console.log(arr.length == 0);// true
+   ```
+
+3. JSON.stringify()
+
+   ```javascript
+   var data = {};
+   var result = (JSON.stringify(data) == "{}");
+   console.log(result);// true
+   ```
+
+4. for in遍历
+
+   ```javascript
+   var data = {};
+   var result = function() {
+     for(var key in data) {
+       return false;
+     }
+     return true;
+   }
+   alert(result);// true
+   ```
+
+
+##### 11.事件处理机制和事件委托
+
++ 事件流：指从页面中接收事件的顺序，有冒泡流和捕获流。
+
++ DOM2级事件流：事件捕获阶段、处于目标阶段、事件冒泡阶段
+
+  ![](https://images2018.cnblogs.com/blog/1414709/201808/1414709-20180818123542724-735687837.png)
+
+  假设定义的事件绑定在图中div上，实际的div元素在捕获阶段不会接收到事件，意味着在捕获阶段，事件从document到<div>后就停止了。下一个阶段是“处于目标阶段”，于是事件在div上发生，并在事件处理中被看成是冒泡阶段的一部分。最后，冒泡阶段发生，事件又传播回文档。
+
++ DOM2级事件处理程序：
+
+  addEventListener(eventName,handlers,boolean)和removeEventListener(),两个方法都一样接收三个参数,要处理的事件名,第二个是事件处理程序函数,第三个值为布尔值。布尔值是true,表示在捕获阶段调用事件处理程序。false时表示在事件冒泡阶段调用事件处理程序,一般建议在冒泡阶段使用,特殊情况才在捕获阶段。
+
+  通过addEventListener()添加的事件处理程序只能用removeEventListener()来移除，并且需要参数**完全一致**，比如参数都是同一个函数的引用。
+
++ 事件对象：
+
+  事件被触发时，会默认给事件处理程序传入一个参数e , 表示事件对象。**在事件处理程序内部，对象this始终等于currentTarget的值，target包含事件的实际目标。**（e.currentTarget === this）
+
+  + preventDefault() 阻止事件的默认行为
+  + event.stopPropagation()可以阻止事件的传播.,取消进一步的事件冒泡或者捕获
+
++ 事件委托：
+
+  + 利用事件冒泡，只在外层父元素指定一个事件处理程序，就可以管理某一类型的所有事件。
+
+  + 优点：
+
+    + 减少内存消耗：如果每个dom节点都绑定事件，那么会增加很多与dom的交互，同时会保存很多对象占用内存，这两者都将导致页面性能变低。而我们如果只使用一个代理，那么会减少很多dom交互和内存占用。
+    + 动态绑定：
+      新生dom节点如果用原来的方式是无法绑定事件的，用委托的方式这方面可以轻松实现，保证父元素存在即可。
+
+  + 例子：
+
+    ```html
+    <ul id="myLinks">
+      <li id="goSomewhere">Go somewhere</li>
+      <li id="doSomething">Do something</li>
+      <li id="sayHi">Say hi</li>
+    </ul>
+    ```
+
+    ```javascript
+    var item1 = document.getElementById("goSomewhere");
+    var item2 = document.getElementById("doSomething");
+    var item3 = document.getElementById("sayHi");
+    
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      switch (target.id) {
+        case "doSomething":
+          document.title = "事件委托";
+          break;
+        case "goSomewhere":
+          location.href = "http://www.baidu.com";
+          break;
+        case "sayHi": 
+          alert("hi");
+          break;
+      }
+    })
+    ```
+
+  + 注意事项：
+
+    使用“事件委托”时，并不是说把事件委托给的元素越靠近顶层就越好。事件冒泡的过程也需要耗时，越靠近顶层，事件的”事件传播链”越长，也就越耗时。如果DOM嵌套结构很深，事件冒泡通过大量祖先元素会导致性能损失。
+
+##### 12.load和DOMContentLoaded事件
+
++ Dom文档加载步骤：
+  1. 解析html结构
+  2. 加载外部脚本和样式表文件
+  3. 解析并执行脚本代码
+  4. 构造HTML DOM模型   //DOMContentLoaded执行点
+  5. 加载图片等外部文件
+  6. 页面加载完毕  //load
+
++ 应用场景：
+
+  给元素绑定事件处理函数，将绑定的函数放在这两个事件的回调中，保证能在页面元素加载完毕之后再绑定事件的函数。
+
+
+
+##### 13.HTTP状态码
+
++ 1xx：指示信息–表示请求已接收，继续处理。
++ 2xx：成功–表示请求已被成功接收、理解、接受。
++ 3xx：重定向–要完成请求必须进行更进一步的操作。
++ 4xx：客户端错误–请求有语法错误或请求无法实现。
++ 5xx：服务器端错误–服务器未能实现合法的请求。
++ 常见状态码：
+  + 200：OK。请求成功，一般用于GET与POST请求。
+  + 204：No Content。无内容。服务器成功处理，但未返回内容。在未更新网页的情况下，可确保浏览器继续显示当前文档。
+  + 301：Moved Permanently。永久移动。请求的资源已被永久的移动到新URI，返回信息会包括新的URI，浏览器会自动定向到新URI。今后任何新的请求都应使用新的URI代替。
+  + 302：Found。临时移动。与301类似。但资源只是临时被移动。客户端应继续使用原有URI。
+  + 304：Not Modified。未修改。所请求的资源未修改，服务器返回此状态码时，不会返回任何资源。客户端通常会缓存访问过的资源，通过提供一个头信息指出客户端希望只返回在指定日期之后修改的资源。
+  + 400：Bad Request。客户端请求的语法错误，服务器无法理解。
+  + 401：Unauthorized。请求要求用户的身份认证。
+  + 403：Forbidden。服务器理解请求客户端的请求，但是拒绝执行此请求。
+  + 404：Not Found。服务器无法根据客户端的请求找到资源（网页）。通过此代码，网站设计人员可设置"您所请求的资源无法找到"的个性页面
+  + 500：Internal Server Error。服务器内部错误，无法完成请求。
+
+
+
+##### 14.移动端触摸事件
+
++ touchstart: 当手指触摸屏幕时候触发；
+
++ touchmove: 当手指在屏幕上滑动的时候连续触发；可以调用阻止默认事件event.preventDefault()阻止屏幕滚动；
+
++ touchend: 手指离开屏幕时触发；
+
++ touchcancel: 系统停止跟踪触摸时触发；
+
+  以上事件都会冒泡，而且都可以取消冒泡。
+
++ 触摸事件属性：
+
+  + touches: 跟踪返回Touch对象的数组；
+  + targetTouchs: 特定事件目标的Touch对象的数组；
+  + changeTouchs: 上次触摸以来改变了的Touch对象的数组；
+
++ Touch对象包含的属性：
+
+  + clientX: 触摸目标在浏览器中的x坐标
+  + clientY: 触摸目标在浏览器中的y坐标
+  + pageX: 触摸目标在当前DOM中的x坐标
+  + pageY: 触摸目标在当前DOM中的y坐标
+  + screenX: 触摸目标在屏幕中的x坐标
+  + screenY: 触摸目标在屏幕中的y坐标
+  + target: 触摸的DOM节点目标
+
+
+
+##### 15.meta标签用法
+
+1. SEO搜索引擎优化
+2. 定义页面的language
+3. 自动刷新并指向新的页面
+4. 实现网页转换时的动态效果
+5. 控制页面缓冲
+6. 网页的顶级定级评价
+7. 控制窗口显示
+
++ name/content属性：
+
+  + keywords告诉搜索引擎网页的关键字
+
+  + description告诉搜索引擎网站的主要内容
+
+  + robots告诉搜索机器人哪些页面需要索引，哪些页面不需要索引
+
+    对应的content有all,none,index,noindex,follow,nofollow。默认是all
+
+  + author
+
+  + renderer告诉浏览器渲染模式
+
+  + viewport视图模式
+
++ http-equiv/content属性：
+
+  + X-UA-Compatible浏览模式
+
+  + expires设定网页到期时间，到期后必须到服务器上重新传输，必须使用GMT时间格式
+
+    ```html
+    <meta http-equiv="expires"content="Fri,01Jan201618:18:18GMT">
+    ```
+
+  + Pragma(cache模式)
+
+    如果禁止浏览器从本地缓存访问则将content设为no-cache
+
+  + Refresh自动刷新并在多少秒后且指向新的页面
+
+    ```html
+    <meta http-equiv="Refresh" content="2;URL=http://www.lbw.com">
+    ```
+
+  + Set-cookie 网页如果过期，存盘的cookie也将被删除，GMT时间格式
+
+    ```html
+    <meta http-equiv="Set-Cookie"content="cookievalue=xxx;expires=Friday,12-Jan-200118:18:18GMT；path=/">
+    ```
+
+  + Window-target   当content为_blank，强制当前窗口以独立页面显示
+
+  + content-Type 显示字符集
+
+  + content-Language 显示语言
+
+  + Cache-Control 指定请求和响应遵循的缓存机制
+
